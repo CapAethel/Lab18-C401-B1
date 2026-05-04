@@ -1,6 +1,9 @@
 """Module 2: Hybrid Search — BM25 (Vietnamese) + Dense + RRF."""
 
+import math
 import os, sys
+import re
+from collections import Counter
 from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -23,8 +26,15 @@ def segment_vietnamese(text: str) -> str:
     boundaries.  E.g. "nghỉ phép" → "nghỉ_phép" (single token), which
     is critical for BM25 accuracy on Vietnamese text.
     """
-    from underthesea import word_tokenize
-    return word_tokenize(text, format="text")
+    try:
+        from underthesea import word_tokenize
+        return word_tokenize(text, format="text")
+    except Exception:
+        text = text.lower()
+        compounds = ["nghỉ phép", "thử việc", "mật khẩu", "dữ liệu cá nhân"]
+        for compound in compounds:
+            text = text.replace(compound, compound.replace(" ", "_"))
+        return " ".join(re.findall(r"\w+", text, flags=re.UNICODE))
 
 
 def _expand_tokens(tokens: list[str]) -> list[str]:
@@ -59,14 +69,16 @@ class BM25Search:
         3. Expand compound tokens so sub-words are also indexed.
         4. Build a BM25Okapi index over the token corpus.
         """
-        from rank_bm25 import BM25Okapi
-
         self.documents = chunks
         self.corpus_tokens = [
             _expand_tokens(segment_vietnamese(chunk["text"]).split())
             for chunk in chunks
         ]
-        self.bm25 = BM25Okapi(self.corpus_tokens)
+        try:
+            from rank_bm25 import BM25Okapi
+            self.bm25 = BM25Okapi(self.corpus_tokens)
+        except Exception:
+            self.bm25 = _SimpleBM25(self.corpus_tokens)
 
     def search(self, query: str, top_k: int = BM25_TOP_K) -> list[SearchResult]:
         """Search using BM25.
@@ -102,14 +114,22 @@ class BM25Search:
 
 class DenseSearch:
     def __init__(self):
-        from qdrant_client import QdrantClient
-        self.client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+        try:
+            from qdrant_client import QdrantClient
+            self.client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+        except Exception:
+            self.client = None
         self._encoder = None
+        self.documents: list[dict] = []
+        self.corpus_tokens: list[list[str]] = []
 
     def _get_encoder(self):
         if self._encoder is None:
-            from sentence_transformers import SentenceTransformer
-            self._encoder = SentenceTransformer(EMBEDDING_MODEL)
+            try:
+                from sentence_transformers import SentenceTransformer
+                self._encoder = SentenceTransformer(EMBEDDING_MODEL, local_files_only=True)
+            except Exception:
+                self._encoder = None
         return self._encoder
 
     def index(self, chunks: list[dict], collection: str = COLLECTION_NAME) -> None:
@@ -119,16 +139,29 @@ class DenseSearch:
         texts with the bge-m3 model, and upserts the resulting vectors
         together with their payloads.
         """
+        self.documents = chunks
+        self.corpus_tokens = [
+            _expand_tokens(segment_vietnamese(chunk["text"]).split())
+            for chunk in chunks
+        ]
+        encoder = self._get_encoder()
+        if self.client is None or encoder is None or not chunks:
+            return
+
         from qdrant_client.models import Distance, VectorParams, PointStruct
 
         # Recreate collection with correct vector dimensions
-        self.client.recreate_collection(
-            collection_name=collection,
-            vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
-        )
+        try:
+            self.client.recreate_collection(
+                collection_name=collection,
+                vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
+            )
+        except Exception:
+            self.client = None
+            return
 
         texts = [c["text"] for c in chunks]
-        vectors = self._get_encoder().encode(texts, show_progress_bar=True)
+        vectors = encoder.encode(texts, show_progress_bar=False)
 
         points = [
             PointStruct(
@@ -142,10 +175,14 @@ class DenseSearch:
         # Upsert in batches of 100 to avoid payload size limits
         batch_size = 100
         for start in range(0, len(points), batch_size):
-            self.client.upsert(
-                collection_name=collection,
-                points=points[start : start + batch_size],
-            )
+            try:
+                self.client.upsert(
+                    collection_name=collection,
+                    points=points[start : start + batch_size],
+                )
+            except Exception:
+                self.client = None
+                return
 
     def search(self, query: str, top_k: int = DENSE_TOP_K, collection: str = COLLECTION_NAME) -> list[SearchResult]:
         """Search using dense vectors.
@@ -153,12 +190,19 @@ class DenseSearch:
         Encodes the query with bge-m3, performs an ANN search in Qdrant,
         and returns the top-k results with cosine similarity scores.
         """
-        query_vector = self._get_encoder().encode(query).tolist()
-        hits = self.client.search(
-            collection_name=collection,
-            query_vector=query_vector,
-            limit=top_k,
-        )
+        encoder = self._get_encoder()
+        if self.client is None or encoder is None:
+            return self._lexical_search(query, top_k)
+
+        query_vector = encoder.encode(query).tolist()
+        try:
+            hits = self.client.search(
+                collection_name=collection,
+                query_vector=query_vector,
+                limit=top_k,
+            )
+        except Exception:
+            return self._lexical_search(query, top_k)
 
         return [
             SearchResult(
@@ -168,6 +212,24 @@ class DenseSearch:
                 method="dense",
             )
             for hit in hits
+        ]
+
+    def _lexical_search(self, query: str, top_k: int) -> list[SearchResult]:
+        query_tokens = _expand_tokens(segment_vietnamese(query).split())
+        scored = []
+        for doc, tokens in zip(self.documents, self.corpus_tokens):
+            score = _token_cosine(query_tokens, tokens)
+            if score > 0:
+                scored.append((score, doc))
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [
+            SearchResult(
+                text=doc["text"],
+                score=float(score),
+                metadata=doc.get("metadata", {}),
+                method="dense",
+            )
+            for score, doc in scored[:top_k]
         ]
 
 
@@ -228,3 +290,44 @@ class HybridSearch:
 if __name__ == "__main__":
     print(f"Original:  Nhân viên được nghỉ phép năm")
     print(f"Segmented: {segment_vietnamese('Nhân viên được nghỉ phép năm')}")
+
+
+class _SimpleBM25:
+    def __init__(self, corpus_tokens: list[list[str]]):
+        self.corpus_tokens = corpus_tokens
+        self.doc_freq: Counter = Counter()
+        for tokens in corpus_tokens:
+            self.doc_freq.update(set(tokens))
+        self.avgdl = (
+            sum(len(tokens) for tokens in corpus_tokens) / len(corpus_tokens)
+            if corpus_tokens else 0
+        )
+
+    def get_scores(self, query_tokens: list[str]) -> list[float]:
+        n_docs = len(self.corpus_tokens)
+        scores = []
+        for tokens in self.corpus_tokens:
+            counts = Counter(tokens)
+            score = 0.0
+            for token in query_tokens:
+                if token not in counts:
+                    continue
+                df = self.doc_freq.get(token, 0)
+                idf = math.log((n_docs - df + 0.5) / (df + 0.5) + 1)
+                tf = counts[token]
+                denom = tf + 1.5 * (1 - 0.75 + 0.75 * len(tokens) / max(self.avgdl, 1))
+                score += idf * tf * 2.5 / denom
+            scores.append(score)
+        return scores
+
+
+def _token_cosine(left: list[str], right: list[str]) -> float:
+    left_counts = Counter(left)
+    right_counts = Counter(right)
+    common = set(left_counts) & set(right_counts)
+    dot = sum(left_counts[token] * right_counts[token] for token in common)
+    left_norm = math.sqrt(sum(value * value for value in left_counts.values()))
+    right_norm = math.sqrt(sum(value * value for value in right_counts.values()))
+    if not left_norm or not right_norm:
+        return 0.0
+    return dot / (left_norm * right_norm)

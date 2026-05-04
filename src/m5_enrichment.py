@@ -20,6 +20,7 @@ except ModuleNotFoundError:
 @dataclass
 class EnrichedChunk:
     """Chunk đã được làm giàu."""
+
     original_text: str
     enriched_text: str
     summary: str
@@ -100,7 +101,9 @@ def generate_hypothesis_questions(text: str, n_questions: int = 3) -> list[str]:
         f"Đoạn này trả lời câu hỏi nào về {topic}?",
     ]
     if re.search(r"\d+", text):
-        questions.insert(0, f"{topic.capitalize()} là bao nhiêu hoặc trong thời hạn mấy ngày?")
+        questions.insert(
+            0, f"{topic.capitalize()} là bao nhiêu hoặc trong thời hạn mấy ngày?"
+        )
     return questions[:n_questions]
 
 
@@ -155,7 +158,7 @@ def extract_metadata(text: str) -> dict:
 
     llm_metadata = _call_openai(
         system=(
-            'Trích xuất metadata từ đoạn văn. Trả về JSON: '
+            "Trích xuất metadata từ đoạn văn. Trả về JSON: "
             '{"topic": "...", "entities": ["..."], "category": "policy|hr|it|finance", "language": "vi|en"}'
         ),
         user=text,
@@ -225,14 +228,16 @@ def enrich_chunks(
         if summary and (use_full or "summary" in selected):
             enriched_text = f"Tóm tắt: {summary}\n\n{enriched_text}"
 
-        enriched.append(EnrichedChunk(
-            original_text=text,
-            enriched_text=enriched_text,
-            summary=summary,
-            hypothesis_questions=questions,
-            auto_metadata={**metadata, **auto_meta},
-            method="+".join(methods),
-        ))
+        enriched.append(
+            EnrichedChunk(
+                original_text=text,
+                enriched_text=enriched_text,
+                summary=summary,
+                hypothesis_questions=questions,
+                auto_metadata={**metadata, **auto_meta},
+                method="+".join(methods),
+            )
+        )
 
     return enriched
 
@@ -295,7 +300,9 @@ def _infer_category(text: str) -> str:
     lowered = text.lower()
     if any(word in lowered for word in ["mật khẩu", "vpn", "tài khoản", "hệ thống"]):
         return "it"
-    if any(word in lowered for word in ["nghỉ phép", "nhân viên", "thâm niên", "giám đốc"]):
+    if any(
+        word in lowered for word in ["nghỉ phép", "nhân viên", "thâm niên", "giám đốc"]
+    ):
         return "hr"
     if any(word in lowered for word in ["chi phí", "thanh toán", "hóa đơn", "bctc"]):
         return "finance"
@@ -303,7 +310,9 @@ def _infer_category(text: str) -> str:
 
 
 def _infer_language(text: str) -> str:
-    vietnamese_chars = "ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ"
+    vietnamese_chars = (
+        "ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ"
+    )
     return "vi" if any(char in text.lower() for char in vietnamese_chars) else "en"
 
 
