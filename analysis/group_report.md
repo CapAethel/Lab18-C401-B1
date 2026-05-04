@@ -1,14 +1,14 @@
 # Group Report — Lab 18: Production RAG
 
-**Nhóm:** [Tên]  
-**Ngày:**
+**Nhóm:** C401-B1 
+**Ngày:** 05/04/2026
 
 ## Thành viên & Phân công
 
 | Tên | Module | Hoàn thành | Tests pass |
 |-----|--------|-----------|-----------|
 | | M1: Chunking | ☐ | /8 |
-| | M2: Hybrid Search | ☐ | /5 |
+| Nguyễn Mai Phương | M2: Hybrid Search | ☐ | /5 |
 | | M3: Reranking | ☐ | /5 |
 | | M4: Evaluation | ☐ | /4 |
 
