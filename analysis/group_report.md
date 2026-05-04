@@ -8,7 +8,7 @@
 | Tên               | Module            | Hoàn thành | Tests pass |
 | ----------------- | ----------------- | ---------- | ---------- |
 | Chu Bá Tuấn Anh   | M1: Chunking      | ☑          | 13/13      |
-| Nguyễn Mai Phương | M2: Hybrid Search | ☐          | /5         |
+| Nguyễn Mai Phương | M2: Hybrid Search | ☑          | 5/5        |
 | Vũ Minh Khải      | M3: Reranking     | ☐          | /5         |
 | Lê Hồng Anh       | M4: Evaluation    | ☐          | /4         |
 
