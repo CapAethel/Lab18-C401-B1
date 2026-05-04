@@ -5,21 +5,21 @@
 
 ## Thành viên & Phân công
 
-| Tên | Module | Hoàn thành | Tests pass |
-|-----|--------|-----------|-----------|
-| | M1: Chunking | ☐ | /8 |
-| Nguyễn Mai Phương | M2: Hybrid Search | ☐ | /5 |
-| | M3: Reranking | ☐ | /5 |
-| | M4: Evaluation | ☐ | /4 |
+| Tên               | Module            | Hoàn thành | Tests pass |
+| ----------------- | ----------------- | ---------- | ---------- |
+| Chu Bá Tuấn Anh   | M1: Chunking      | ☑          | 13/13      |
+| Nguyễn Mai Phương | M2: Hybrid Search | ☐          | /5         |
+| Vũ Minh Khải      | M3: Reranking     | ☐          | /5         |
+| Lê Hồng Anh       | M4: Evaluation    | ☐          | /4         |
 
 ## Kết quả RAGAS
 
-| Metric | Naive | Production | Δ |
-|--------|-------|-----------|---|
-| Faithfulness | | | |
-| Answer Relevancy | | | |
-| Context Precision | | | |
-| Context Recall | | | |
+| Metric            | Naive | Production | Δ   |
+| ----------------- | ----- | ---------- | --- |
+| Faithfulness      |       |            |     |
+| Answer Relevancy  |       |            |     |
+| Context Precision |       |            |     |
+| Context Recall    |       |            |     |
 
 ## Key Findings
 
