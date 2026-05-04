@@ -1,17 +1,89 @@
 {
   "aggregate": {
-    "faithfulness": 0.85,
-    "answer_relevancy": 0.1111,
-    "context_precision": 0.1111,
-    "context_recall": 1.0
+    "faithfulness": 0.41666666666666663,
+    "answer_relevancy": 0.35239663148404526,
+    "context_precision": 0.49999999995833333,
+    "context_recall": 0.8
   },
-  "num_questions": 1,
+  "num_questions": 25,
   "failures": [
     {
-      "question": "hihi cả nhà tự tạo testset bằng cơm nhé",
+      "question": "DHA Surfaces có phát sinh hàng hóa, dịch vụ nhập khẩu trong kỳ không?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.008680005876934946,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Theo Nghị định 13/2023, dữ liệu cá nhân nhạy cảm gồm những loại nào?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.06288706570904774,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Tổng doanh thu bán hàng trong kỳ của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "context_precision",
+      "score": 0.0,
+      "avg_score": 0.07812923562724365,
+      "diagnosis": "Too many irrelevant chunks",
+      "suggested_fix": "Add reranking or metadata filter"
+    },
+    {
+      "question": "Thuế suất GTGT áp dụng cho hàng hóa bán ra của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.27038162527577214,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Theo Nghị định 13/2023, Bên Kiểm soát dữ liệu phải thực hiện yêu cầu xóa dữ liệu trong bao lâu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.2803486396031941,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Theo Nghị định 13/2023, dữ liệu cá nhân cơ bản bao gồm những loại thông tin gì?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.29741781689840086,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Nghị định 13/2023 áp dụng đối với những đối tượng nào?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.2974809518989789,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Thuế GTGT đầu vào được khấu trừ kỳ này của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.3427420410896503,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Tổng thuế GTGT đầu ra (bán ra) trong kỳ của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.35670489507731395,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Thuế GTGT còn được khấu trừ chuyển sang kỳ sau của DHA Surfaces là bao nhiêu?",
       "worst_metric": "answer_relevancy",
-      "score": 0.1111,
-      "avg_score": 0.51805,
+      "score": -0.04235537767538805,
+      "avg_score": 0.364411155568653,
       "diagnosis": "Answer doesn't match question",
       "suggested_fix": "Improve prompt template"
     }

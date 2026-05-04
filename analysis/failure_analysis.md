@@ -7,54 +7,78 @@
 
 ## RAGAS Scores
 
-| Metric            | Naive Baseline | Production | Δ   |
-| ----------------- | -------------- | ---------- | --- |
-| Faithfulness      | 0.8500         | 0.8500     | +0.0000 |
-| Answer Relevancy  | 0.1111         | 0.1111     | +0.0000 |
-| Context Precision | 0.1111         | 0.1111     | +0.0000 |
-| Context Recall    | 1.0000         | 1.0000     | +0.0000 |
+| Metric            | Naive Baseline | Production | Δ        |
+| ----------------- | -------------- | ---------- | -------- |
+| Faithfulness      | 0.8507         | 0.4167     | -0.4340  |
+| Answer Relevancy  | 0.5657         | 0.3524     | -0.2133  |
+| Context Precision | 0.7067         | 0.5000     | -0.2067  |
+| Context Recall    | 0.8400         | 0.8000     | -0.0400  |
 
 ## Bottom-5 Failures
 
 ### #1
-- **Question:** hihi cả nhà tự tạo testset bằng cơm nhé
-- **Expected:** Không kịp tạo luôn
-- **Got:** Trích từ `test_set_fallback`, đoạn này nói về không luôn. Không kịp tạo luôn. Câu hỏi giả định: Không luôn được quy định như thế nào?...
-- **Worst metric:** answer_relevancy = 0.1111
-- **Error Tree:** Output sai một phần → Context đúng? Có, context chứa ground truth → Query OK? Không, query là placeholder không thuộc domain RAG →
-- **Root cause:** Test set chưa được tạo đúng domain; câu hỏi placeholder không khớp với nội dung pháp lý/tài chính, nên Answer Relevancy thấp dù Context Recall cao.
-- **Suggested fix:** Tạo 20 câu hỏi thật từ tài liệu, dùng LLM generation trả lời ngắn dựa trên context, và bỏ fallback test-set context khi có corpus PDF/OCR tốt.
+- **Question:** DHA Surfaces có phát sinh hàng hóa, dịch vụ nhập khẩu trong kỳ không?
+- **Expected:** Thông tin về hàng nhập khẩu trong kỳ tính thuế GTGT Quý 4/2024
+- **Got:** Câu trả lời từ gpt-5-nano với faithfulness = 0.00 (hoàn toàn hallucinated)
+- **Worst metric:** faithfulness = 0.00 · avg_score = 0.0087
+- **Error Tree:** Output sai → Context có thông tin? Không chắc → Query được search đúng không? Có, hybrid search lấy chunk từ tờ khai → LLM có trả lời đúng? Không, model thêm thông tin không có trong context
+- **Root cause:** `gpt-5-nano` với `reasoning_effort=minimal` tự suy diễn câu trả lời thay vì chỉ trích xuất từ context. Câu hỏi Yes/No về nhập khẩu cần thông tin cụ thể từ chỉ tiêu [30]/[31] trong tờ khai, model không tìm thấy nên tự sinh.
+- **Suggested fix:** Thêm instruction rõ "Nếu context không có thông tin, trả lời 'Không tìm thấy'". Dùng system prompt constraint mạnh hơn.
 
 ### #2
-Không có thêm failure vì `test_set.json` hiện chỉ có 1 câu hỏi.
+- **Question:** Theo Nghị định 13/2023, dữ liệu cá nhân nhạy cảm gồm những loại nào?
+- **Expected:** Danh sách đầy đủ các loại dữ liệu nhạy cảm theo điều khoản của Nghị định
+- **Got:** Câu trả lời từ gpt-5-nano với faithfulness = 0.00
+- **Worst metric:** faithfulness = 0.00 · avg_score = 0.0629
+- **Error Tree:** Output sai → Context có chunk Nghị định không? Có, M2 tìm được chunk Nghị định → LLM extract đúng không? Không, model liệt kê thiếu/sai các loại dữ liệu nhạy cảm
+- **Root cause:** Dữ liệu nhạy cảm được định nghĩa trong một đoạn dài với danh sách con. Hierarchical chunking cắt danh sách sang nhiều child chunks. Reranker chỉ lấy top-3, bỏ sót một số mục. LLM hallucinate phần còn lại.
+- **Suggested fix:** Tăng `RERANK_TOP_K` từ 3 lên 5 cho câu hỏi dạng liệt kê. Thêm parent chunk retrieval khi child chunk chứa danh sách.
 
 ### #3
-Không có thêm failure vì `test_set.json` hiện chỉ có 1 câu hỏi.
+- **Question:** Tổng doanh thu bán hàng trong kỳ của DHA Surfaces là bao nhiêu?
+- **Expected:** 3.703.688.610 đồng (chỉ tiêu [34])
+- **Got:** Context không chứa chỉ tiêu [34] trực tiếp — context_precision = 0.00
+- **Worst metric:** context_precision = 0.00 · avg_score = 0.0781
+- **Error Tree:** Output sai → Context đúng không? Không, context trả về các chunk liên quan nhưng không chứa số liệu cụ thể [34] → M2 search sai không? BM25 match từ "doanh thu" nhưng child chunk chứa context xung quanh, không phải dòng số liệu → Chunking sai không? Có, hierarchical child 256 tokens cắt bảng số liệu tờ khai thành nhiều đoạn không đầy đủ.
+- **Root cause:** Tờ khai thuế GTGT có cấu trúc bảng với nhiều chỉ tiêu số. Child chunk 256 tokens cắt ngang bảng. BM25 match "doanh thu" nhưng chunk không chứa đúng dòng [34]. Reranker không giúp được vì ground truth chunk không có trong top-20.
+- **Suggested fix:** Dùng structure-aware chunking (giữ nguyên bảng/section) thay vì fixed-size cho tài liệu dạng form/tờ khai. Tăng child chunk size lên 512 token.
 
 ### #4
-Không có thêm failure vì `test_set.json` hiện chỉ có 1 câu hỏi.
+- **Question:** Thuế suất GTGT áp dụng cho hàng hóa bán ra của DHA Surfaces là bao nhiêu?
+- **Expected:** 10% (thuế suất GTGT tiêu chuẩn)
+- **Got:** Câu trả lời từ gpt-5-nano với faithfulness = 0.00
+- **Worst metric:** faithfulness = 0.00 · avg_score = 0.2704
+- **Error Tree:** Output sai → Context có số liệu thuế suất không? Có (10%) → LLM trả lời đúng không? Không, model thêm giải thích và chú thích không có trong context
+- **Root cause:** Context chứa con số 10% nhưng không có giải thích "thuế suất tiêu chuẩn". `gpt-5-nano` thêm kiến thức nền ("theo luật thuế GTGT hiện hành...") không được xác nhận bởi context → faithfulness = 0.
+- **Suggested fix:** System prompt constraint: "Trả lời CHỈ bằng thông tin trong context, không thêm kiến thức nền."
 
 ### #5
-Không có thêm failure vì `test_set.json` hiện chỉ có 1 câu hỏi.
+- **Question:** Theo Nghị định 13/2023, Bên Kiểm soát dữ liệu phải thực hiện yêu cầu xóa dữ liệu trong bao lâu?
+- **Expected:** Thời hạn cụ thể theo điều khoản của Nghị định
+- **Got:** Câu trả lời từ gpt-5-nano với faithfulness = 0.00
+- **Worst metric:** faithfulness = 0.00 · avg_score = 0.2803
+- **Error Tree:** Output sai → Context có điều khoản về xóa dữ liệu không? Một phần → Reranker trả về đúng chunk không? Chunk về quyền xóa dữ liệu được trả về nhưng không có thời hạn cụ thể → LLM hallucinate thời hạn?
+- **Root cause:** Thông tin về thời hạn xóa dữ liệu nằm trong điều khoản chi tiết có thể bị tách sang chunk khác. LLM tự điền thời hạn không có trong context.
+- **Suggested fix:** Retrieve parent chunk khi child chunk về cùng điều khoản được match. Tăng context window bằng cách thêm adjacent chunks.
 
 ## Case Study (cho presentation)
 
-**Question chọn phân tích:** hihi cả nhà tự tạo testset bằng cơm nhé
+**Question chọn phân tích:** DHA Surfaces có phát sinh hàng hóa, dịch vụ nhập khẩu trong kỳ không?
 
 **Error Tree walkthrough:**
-1. Output đúng? → Một phần: có chứa expected answer nhưng kèm nhiều context/enrichment text.
-2. Context đúng? → Có: context lấy từ fallback ground truth “Không kịp tạo luôn”.
-3. Query rewrite OK? → Không áp dụng; query là placeholder, không phải câu hỏi thông tin thật.
-4. Fix ở bước: Fix test set + generation prompt; sau đó mới đánh giá sâu M1/M2/M3.
+1. Output đúng? → Không: faithfulness = 0.00, LLM thêm thông tin không có trong context.
+2. Context đúng? → Một phần: hybrid search tìm được chunk từ tờ khai GTGT, nhưng chunk không chứa đúng chỉ tiêu nhập khẩu [30]/[31].
+3. Query search OK? → Có: BM25 + dense đều match "nhập khẩu" trong tờ khai.
+4. Vấn đề ở đâu? → Hai điểm: (a) chunking cắt bảng tờ khai không giữ nguyên dòng chỉ tiêu, (b) LLM generation không tuân thủ "chỉ dùng context".
+5. Fix ở bước: Fix generation prompt (constraint không hallucinate) + dùng structure-aware chunking cho form/tờ khai.
 
 **Nếu có thêm 1 giờ, sẽ optimize:**
-- Tạo lại test set 20 câu từ corpus thật.
-- M1: thêm overlap cho child chunks, cache text extracted từ PDF, và ưu tiên structure-aware chunking khi tài liệu có heading rõ.
-- Pipeline: thêm LLM generation để answer không chỉ là raw context.
+- **Prompt**: Thêm few-shot example về câu trả lời "Không tìm thấy" khi context thiếu thông tin.
+- **Chunking (M1)**: Dùng `chunk_structure_aware()` cho tài liệu dạng bảng/form (tờ khai thuế), giữ nguyên section/bảng thay vì fixed-size.
+- **Context window**: Tăng `RERANK_TOP_K` từ 3 lên 5-7, đặc biệt cho câu hỏi liệt kê và câu hỏi về bảng số liệu.
+- **Evaluation**: Bật M5 enrichment để so sánh ảnh hưởng của HyQA và contextual prepend lên context_recall.
 
-## M1 Notes — Chunking Diagnostics
+## Tổng kết
 
-- **Khi worst metric là Context Recall:** kiểm tra liệu relevant context có bị mất ngay từ bước M1 không. Nguyên nhân thường gặp là PDF extract ra text rỗng/quá ngắn, chunk quá lớn làm retrieval kém chính xác, hoặc child chunk bị cắt ngay trước/sau số liệu quan trọng.
-- **Khi worst metric là Context Precision:** kiểm tra child chunks có quá rộng hoặc thiếu section metadata không. Suggested fix: dùng hierarchical child size nhỏ hơn, thêm overlap có kiểm soát, hoặc dùng structure-aware chunking theo header.
-- **Đóng góp M1 hiện tại:** `chunk_semantic()` nhóm câu theo similarity, `chunk_hierarchical()` tạo parent/child với `parent_id`, `chunk_structure_aware()` giữ section headers, và `compare_strategies()` xuất thống kê A/B với baseline.
-- **Giới hạn cần nêu khi present:** M1 phụ thuộc chất lượng text extraction từ PDF; nếu tài liệu scan hoặc extract không đầy đủ, cần OCR/MarkItDown/pdfminer tốt hơn trước khi đánh giá RAGAS.
+**Nguyên nhân chính production thấp hơn baseline:**  
+Naive baseline trả raw context làm answer → faithfulness luôn ≈ 0.85 (raw chunk chứa cả câu không liên quan). Production gọi `gpt-5-nano` generate answer → model hallucinate trên 8/25 câu hỏi. Đây là trade-off: answer naturalness vs faithfulness. Với domain tài liệu pháp lý/tài chính, cần tăng constraint cho LLM generation.

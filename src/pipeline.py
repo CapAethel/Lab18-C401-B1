@@ -9,7 +9,7 @@ from src.m2_search import HybridSearch
 from src.m3_rerank import CrossEncoderReranker
 from src.m4_eval import load_test_set, evaluate_ragas, failure_analysis, save_report
 from src.m5_enrichment import enrich_chunks
-from config import OPENAI_API_KEY, OPENAI_MODEL, RERANK_TOP_K
+from config import ENABLE_M4, ENABLE_M5, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, RERANK_TOP_K
 
 
 def build_pipeline():
@@ -30,13 +30,15 @@ def build_pipeline():
 
     # Step 2: Enrichment (M5)
     print("\n[2/4] Enriching chunks (M5)...")
-    enriched = enrich_chunks(all_chunks, methods=["contextual", "hyqa", "metadata"])
-    if enriched:
-        # Use enriched text for indexing
-        all_chunks = [{"text": e.enriched_text, "metadata": e.auto_metadata} for e in enriched]
-        print(f"  Enriched {len(enriched)} chunks")
+    if ENABLE_M5:
+        enriched = enrich_chunks(all_chunks, methods=["contextual", "hyqa", "metadata"])
+        if enriched:
+            all_chunks = [{"text": e.enriched_text, "metadata": e.auto_metadata} for e in enriched]
+            print(f"  Enriched {len(enriched)} chunks")
+        else:
+            print("  ⚠️  M5 not implemented — using raw chunks (fallback)")
     else:
-        print("  ⚠️  M5 not implemented — using raw chunks (fallback)")
+        print("  Skipped M5 enrichment")
 
     # Step 3: Index (M2)
     print("\n[3/4] Indexing (BM25 + Dense)...")
@@ -64,7 +66,7 @@ def run_query(query: str, search: HybridSearch, reranker: CrossEncoderReranker) 
 
     from openai import OpenAI
 
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL or None)
     context_str = "\n\n".join(contexts)
     resp = client.responses.create(
         model=OPENAI_MODEL,
@@ -79,6 +81,10 @@ def run_query(query: str, search: HybridSearch, reranker: CrossEncoderReranker) 
 
 def evaluate_pipeline(search: HybridSearch, reranker: CrossEncoderReranker):
     """Run evaluation on test set."""
+    if not ENABLE_M4:
+        print("\n[Eval] Skipped M4 evaluation")
+        return None
+
     print("\n[Eval] Running queries...")
     test_set = load_test_set()
     questions, answers, all_contexts, ground_truths = [], [], [], []

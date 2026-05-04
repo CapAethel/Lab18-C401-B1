@@ -5,7 +5,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import EMBEDDING_MODEL, OPENAI_API_KEY, OPENAI_MODEL, TEST_SET_PATH
+from config import EMBEDDING_MODEL, OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, TEST_SET_PATH
 
 
 @dataclass
@@ -61,7 +61,7 @@ def evaluate_ragas(questions: list[str], answers: list[str],
         "reference": ground_truths,
     })
 
-    langchain_llm = GPT5NanoChatOpenAI(
+    llm_kwargs = dict(
         model=OPENAI_MODEL,
         api_key=OPENAI_API_KEY,
         reasoning_effort="minimal",
@@ -69,6 +69,9 @@ def evaluate_ragas(questions: list[str], answers: list[str],
         max_retries=2,
         timeout=60,
     )
+    if OPENAI_BASE_URL:
+        llm_kwargs["base_url"] = OPENAI_BASE_URL
+    langchain_llm = GPT5NanoChatOpenAI(**llm_kwargs)
     llm = LangchainLLMWrapper(
         langchain_llm,
         bypass_temperature=True,
@@ -93,7 +96,7 @@ def evaluate_ragas(questions: list[str], answers: list[str],
         ],
         llm=llm,
         embeddings=embeddings,
-        raise_exceptions=True,
+        raise_exceptions=False,
     )
     
     # Convert to pandas for easier processing

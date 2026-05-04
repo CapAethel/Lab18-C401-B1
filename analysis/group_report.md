@@ -1,7 +1,7 @@
 # Group Report — Lab 18: Production RAG
 
 **Nhóm:** C401-B1 
-**Ngày:** 05/04/2026
+**Ngày:** 04/05/2026
 
 ## Thành viên & Phân công
 
@@ -14,22 +14,27 @@
 
 ## Kết quả RAGAS
 
-| Metric            | Naive | Production | Δ   |
-| ----------------- | ----- | ---------- | --- |
-| Faithfulness      | 0.8500 | 0.8500     | +0.0000 |
-| Answer Relevancy  | 0.1111 | 0.1111     | +0.0000 |
-| Context Precision | 0.1111 | 0.1111     | +0.0000 |
-| Context Recall    | 1.0000 | 1.0000     | +0.0000 |
+| Metric            | Naive  | Production | Δ        |
+| ----------------- | ------ | ---------- | -------- |
+| Faithfulness      | 0.8507 | 0.4167     | -0.4340  |
+| Answer Relevancy  | 0.5657 | 0.3524     | -0.2133  |
+| Context Precision | 0.7067 | 0.5000     | -0.2067  |
+| Context Recall    | 0.8400 | 0.8000     | -0.0400  |
 
 ## Key Findings
 
-1. **Biggest improvement:** Pipeline đã chạy end-to-end với M1 hierarchical chunking, M2 hybrid fallback, M3 reranking fallback, M4 offline evaluation và M5 enrichment. Faithfulness và Context Recall đạt ngưỡng ≥ 0.75 trên test set hiện có.
-2. **Biggest challenge:** Test set hiện chỉ có 1 câu placeholder và PDF source extract ra rất ít text, nên scores chưa phản ánh chất lượng RAG thật. Cần test set đầy đủ hơn để so sánh module công bằng.
-3. **Surprise finding:** Structure-aware/enrichment chỉ phát huy tốt khi input có nội dung và cấu trúc rõ. Khi PDF extraction rỗng, fallback từ `test_set.json` giúp pipeline không chết nhưng làm Answer Relevancy/Context Precision thấp.
+1. **Biggest challenge — LLM generation gây hallucination:** Pipeline production gọi `gpt-5-nano` để generate câu trả lời từ context, trong khi naive baseline trả thẳng raw context làm answer. Raw context luôn faithful với chính nó, nên naive faithfulness = 0.85. Khi LLM generate, 8/25 câu có faithfulness = 0 vì model thêm kiến thức nền không có trong context. Đây là bottleneck lớn nhất.
+
+2. **Context Precision giảm (0.71 → 0.50):** Naive dùng 164 paragraph chunks, production dùng 331 hierarchical child chunks nhỏ hơn. Hierarchical child size 256 tokens cắt bảng tờ khai thuế thành nhiều đoạn rời, khiến nhiều chunk được retrieve không chứa đúng số liệu cần. Reranker (M3) giúp một phần nhưng không đủ vì ground-truth chunk không vào top-3.
+
+3. **Context Recall ổn định (0.84 → 0.80):** Hybrid search (M2) + hierarchical chunking (M1) giữ được recall gần baseline. Điều này cho thấy M1+M2 hoạt động đúng — phần lớn thông tin cần thiết được tìm thấy, vấn đề là ở precision và generation.
 
 ## Presentation Notes (5 phút)
 
-1. RAGAS scores (naive vs production): Faithfulness 0.8500 → 0.8500, Answer Relevancy 0.1111 → 0.1111, Context Precision 0.1111 → 0.1111, Context Recall 1.0000 → 1.0000.
-2. Biggest win — module nào, tại sao: M1 + M5 giúp pipeline luôn có chunk enriched để index ngay cả khi source PDF khó extract; M1 vẫn giữ `parent_id` để trace context.
-3. Case study — 1 failure, Error Tree walkthrough: Question placeholder “hihi cả nhà tự tạo testset bằng cơm nhé” có Answer Relevancy thấp vì câu hỏi không phải domain question, trong khi context lấy từ fallback ground truth.
-4. Next optimization nếu có thêm 1 giờ: Tạo test set 20 câu thật, thêm OCR/MarkItDown/pdfminer ổn định cho PDF, thêm overlap 10-20% cho child chunks, và dùng LLM generation thay vì trả raw context.
+1. **RAGAS scores:** Naive → Production: Faithfulness 0.85 → 0.42, Answer Relevancy 0.57 → 0.35, Context Precision 0.71 → 0.50, Context Recall 0.84 → 0.80.
+
+2. **Biggest finding — Production thấp hơn Naive, và lý do:** Naive pipeline trả raw context làm answer → trivially faithful. Production dùng LLM generation → model hallucinate trên câu hỏi số liệu tài chính cụ thể (tờ khai thuế) và câu hỏi liệt kê pháp lý (Nghị định). Trade-off rõ ràng: answer naturalness vs faithfulness.
+
+3. **Case study failure — Error Tree:** Câu "DHA Surfaces có phát sinh hàng nhập khẩu không?" → faithfulness=0. Error tree: (1) Output sai? Có. (2) Context đúng? Một phần — BM25+dense match tờ khai nhưng chunk bị cắt không chứa chỉ tiêu [30][31]. (3) LLM hallucinate? Có — model thêm nội dung không có trong context. Root cause: hierarchical chunking cắt ngang bảng tờ khai + LLM không có constraint "chỉ dùng context".
+
+4. **Next optimization nếu có thêm 1 giờ:** (1) Thêm hard constraint vào system prompt: "Nếu không có trong context, trả lời 'Không tìm thấy'." (2) Dùng `chunk_structure_aware()` cho tờ khai/form — giữ nguyên section thay vì fixed 256 tokens. (3) Tăng `RERANK_TOP_K` lên 5-7 cho câu hỏi liệt kê. (4) Bật M5 enrichment (HyQA) để tăng context recall thêm.

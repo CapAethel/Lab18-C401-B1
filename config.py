@@ -8,7 +8,10 @@ load_dotenv()
 # --- API Keys ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-nano")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "")  # Optional proxy/gateway URL
 COHERE_API_KEY = os.getenv("COHERE_API_KEY", "")
+ENABLE_M4 = os.getenv("ENABLE_M4", "1") == "1"
+ENABLE_M5 = os.getenv("ENABLE_M5", "0") == "1"
 
 # --- Qdrant ---
 QDRANT_HOST = "localhost"

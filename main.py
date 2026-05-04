@@ -11,6 +11,8 @@ import json
 import os
 import time
 
+from config import ENABLE_M4
+
 
 def main():
     print("=" * 60)
@@ -21,10 +23,14 @@ def main():
     os.makedirs("reports", exist_ok=True)
 
     # Step 1: Basic Baseline
-    print("\n📌 STEP 1: Running Basic RAG Baseline...")
-    print("-" * 40)
-    from naive_baseline import main as run_baseline
-    run_baseline()
+    if ENABLE_M4:
+        print("\n📌 STEP 1: Running Basic RAG Baseline...")
+        print("-" * 40)
+        from naive_baseline import main as run_baseline
+        run_baseline()
+    else:
+        print("\n📌 STEP 1: Skipping Basic RAG Baseline (M4 disabled)...")
+        print("-" * 40)
 
     # Step 2: Production Pipeline
     print("\n📌 STEP 2: Running Production Pipeline...")
@@ -34,9 +40,10 @@ def main():
     prod_results = evaluate_pipeline(search, reranker)
 
     # Move reports to reports/
-    for f in ["ragas_report.json", "naive_baseline_report.json"]:
-        if os.path.exists(f):
-            os.rename(f, f"reports/{f}")
+    if ENABLE_M4:
+        for f in ["ragas_report.json", "naive_baseline_report.json"]:
+            if os.path.exists(f):
+                os.replace(f, f"reports/{f}")
 
     # Step 3: Comparison
     print("\n📌 STEP 3: Comparison")
@@ -44,7 +51,7 @@ def main():
     naive_path = "reports/naive_baseline_report.json"
     prod_path = "reports/ragas_report.json"
 
-    if os.path.exists(naive_path) and os.path.exists(prod_path):
+    if ENABLE_M4 and os.path.exists(naive_path) and os.path.exists(prod_path):
         with open(naive_path, encoding="utf-8") as f:
             naive = json.load(f)
         with open(prod_path, encoding="utf-8") as f:
@@ -58,6 +65,8 @@ def main():
             d = p - n
             status = "✓" if p >= 0.75 else " "
             print(f"{status} {m:<23} {n:>8.4f} {p:>12.4f} {d:>+8.4f}")
+    else:
+        print("Skipped comparison because M4 evaluation is disabled")
 
     elapsed = time.time() - start
     print(f"\n⏱️  Total time: {elapsed:.1f}s")
