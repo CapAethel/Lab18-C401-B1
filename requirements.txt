@@ -21,3 +21,5 @@ pandas
 tqdm
 pytest
 pytest-timeout
+
+markitdown

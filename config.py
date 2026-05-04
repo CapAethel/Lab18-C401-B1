@@ -7,6 +7,7 @@ load_dotenv()
 
 # --- API Keys ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-nano")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY", "")
 
 # --- Qdrant ---
@@ -16,8 +17,9 @@ COLLECTION_NAME = "lab18_production"
 NAIVE_COLLECTION = "lab18_naive"
 
 # --- Embedding ---
-EMBEDDING_MODEL = "BAAI/bge-m3"
-EMBEDDING_DIM = 1024
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "384"))
+RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 # --- Chunking ---
 HIERARCHICAL_PARENT_SIZE = 2048

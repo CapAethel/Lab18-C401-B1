@@ -1,10 +1,11 @@
 """Module 4: RAGAS Evaluation — 4 metrics + failure analysis."""
 
 import os, sys, json
+from copy import deepcopy
 from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import TEST_SET_PATH
+from config import EMBEDDING_MODEL, OPENAI_API_KEY, OPENAI_MODEL, TEST_SET_PATH
 
 
 @dataclass
@@ -28,31 +29,71 @@ def load_test_set(path: str = TEST_SET_PATH) -> list[dict]:
 def evaluate_ragas(questions: list[str], answers: list[str],
                    contexts: list[list[str]], ground_truths: list[str]) -> dict:
     """Run RAGAS evaluation."""
-    import os
-    
-    # Check if OPENAI_API_KEY is set
-    if not os.getenv("OPENAI_API_KEY"):
-        return _fallback_eval(questions, answers, contexts, ground_truths)
+    if not OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is required to run real RAGAS evaluation.")
 
-    try:
-        from ragas import evaluate
-        from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
-        from datasets import Dataset
-    except Exception:
-        return _fallback_eval(questions, answers, contexts, ground_truths)
+    from ragas import evaluate
+    from ragas.embeddings import LangchainEmbeddingsWrapper
+    from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+    from ragas.llms import LangchainLLMWrapper
+    from datasets import Dataset
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_openai import ChatOpenAI
+
+    class GPT5NanoChatOpenAI(ChatOpenAI):
+        def generate_prompt(self, prompts, stop=None, callbacks=None, **kwargs):
+            kwargs.pop("temperature", None)
+            return super().generate_prompt(
+                prompts, stop=stop, callbacks=callbacks, **kwargs
+            )
+
+        async def agenerate_prompt(self, prompts, stop=None, callbacks=None, **kwargs):
+            kwargs.pop("temperature", None)
+            return await super().agenerate_prompt(
+                prompts, stop=stop, callbacks=callbacks, **kwargs
+            )
     
     # Create dataset from inputs
     dataset = Dataset.from_dict({
-        "question": questions,
-        "answer": answers,
-        "contexts": contexts,
-        "ground_truth": ground_truths,
+        "user_input": questions,
+        "response": answers,
+        "retrieved_contexts": contexts,
+        "reference": ground_truths,
     })
+
+    langchain_llm = GPT5NanoChatOpenAI(
+        model=OPENAI_MODEL,
+        api_key=OPENAI_API_KEY,
+        reasoning_effort="minimal",
+        max_completion_tokens=2048,
+        max_retries=2,
+        timeout=60,
+    )
+    llm = LangchainLLMWrapper(
+        langchain_llm,
+        bypass_temperature=True,
+        bypass_n=True,
+    )
+    embeddings = LangchainEmbeddingsWrapper(
+        HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
+    )
     
     # Run RAGAS evaluation with all 4 metrics
     result = evaluate(
         dataset,
-        metrics=[faithfulness, answer_relevancy, context_precision, context_recall]
+        metrics=[
+            deepcopy(faithfulness),
+            deepcopy(answer_relevancy),
+            deepcopy(context_precision),
+            deepcopy(context_recall),
+        ],
+        llm=llm,
+        embeddings=embeddings,
+        raise_exceptions=True,
     )
     
     # Convert to pandas for easier processing
@@ -62,10 +103,10 @@ def evaluate_ragas(questions: list[str], answers: list[str],
     per_question = []
     for _, row in df.iterrows():
         per_question.append(EvalResult(
-            question=row["question"],
-            answer=row["answer"],
-            contexts=row["contexts"],
-            ground_truth=row["ground_truth"],
+            question=row["user_input"],
+            answer=row["response"],
+            contexts=row["retrieved_contexts"],
+            ground_truth=row["reference"],
             faithfulness=float(row["faithfulness"]),
             answer_relevancy=float(row["answer_relevancy"]),
             context_precision=float(row["context_precision"]),
@@ -80,50 +121,6 @@ def evaluate_ragas(questions: list[str], answers: list[str],
         "context_recall": float(df["context_recall"].mean()),
         "per_question": per_question,
     }
-
-
-def _fallback_eval(questions: list[str], answers: list[str],
-                   contexts: list[list[str]], ground_truths: list[str]) -> dict:
-    """Deterministic local scores for offline lab/testing environments."""
-    per_question = []
-    for q, a, c, gt in zip(questions, answers, contexts, ground_truths):
-        joined_context = " ".join(c)
-        context_recall_score = _token_overlap(gt, joined_context)
-        context_precision_score = _token_overlap(q, joined_context)
-        answer_relevancy_score = _token_overlap(q, a)
-        faithfulness_score = 0.85 if a and a in joined_context else max(0.5, _token_overlap(a, joined_context))
-        per_question.append(EvalResult(
-            question=q,
-            answer=a,
-            contexts=c,
-            ground_truth=gt,
-            faithfulness=round(faithfulness_score, 4),
-            answer_relevancy=round(answer_relevancy_score, 4),
-            context_precision=round(context_precision_score, 4),
-            context_recall=round(context_recall_score, 4),
-        ))
-
-    def mean(metric: str) -> float:
-        if not per_question:
-            return 0.0
-        return round(sum(getattr(result, metric) for result in per_question) / len(per_question), 4)
-
-    return {
-        "faithfulness": mean("faithfulness"),
-        "answer_relevancy": mean("answer_relevancy"),
-        "context_precision": mean("context_precision"),
-        "context_recall": mean("context_recall"),
-        "per_question": per_question,
-    }
-
-
-def _token_overlap(left: str, right: str) -> float:
-    import re
-    left_tokens = set(re.findall(r"\w+", (left or "").lower(), flags=re.UNICODE))
-    right_tokens = set(re.findall(r"\w+", (right or "").lower(), flags=re.UNICODE))
-    if not left_tokens:
-        return 0.0
-    return len(left_tokens & right_tokens) / len(left_tokens)
 
 
 def failure_analysis(eval_results: list[EvalResult], bottom_n: int = 10) -> list[dict]:

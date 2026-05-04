@@ -7,7 +7,6 @@ So sánh với basic chunking (baseline) để thấy improvement.
 Test: pytest tests/test_m1.py
 """
 
-import json
 import math
 import os, sys, glob, re
 import subprocess
@@ -50,8 +49,6 @@ def load_documents(data_dir: str = DATA_DIR) -> list[dict]:
                 text = f.read()
         if text.strip():
             docs.append({"text": text, "metadata": {"source": os.path.basename(fp)}})
-    if not docs:
-        docs.extend(_load_fallback_documents())
     return docs
 
 
@@ -290,7 +287,18 @@ def _read_pdf(filepath: str) -> str:
         from markitdown import MarkItDown
 
         result = MarkItDown().convert(filepath)
-        return result.text_content
+        if result.text_content.strip():
+            return result.text_content
+    except Exception:
+        pass
+
+    try:
+        import fitz
+
+        doc = fitz.open(filepath)
+        text = "\n".join(page.get_text() for page in doc)
+        if text.strip():
+            return text
     except Exception:
         pass
 
@@ -305,26 +313,6 @@ def _read_pdf(filepath: str) -> str:
         return result.stdout
     except Exception:
         return ""
-
-
-def _load_fallback_documents() -> list[dict]:
-    """Use test-set ground truths when PDF extraction returns no text."""
-    test_set_path = os.path.join(os.path.dirname(DATA_DIR), "test_set.json")
-    try:
-        with open(test_set_path, encoding="utf-8") as f:
-            test_set = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return []
-
-    docs = []
-    for i, item in enumerate(test_set):
-        text = item.get("ground_truth") or item.get("answer") or ""
-        if text.strip():
-            docs.append({
-                "text": text.strip(),
-                "metadata": {"source": "test_set_fallback", "item_index": i},
-            })
-    return docs
 
 
 def _sentence_similarities(sentences: list[str]) -> list[float]:

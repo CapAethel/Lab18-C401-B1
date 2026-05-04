@@ -12,9 +12,10 @@ from dataclasses import dataclass
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from config import OPENAI_API_KEY
+    from config import OPENAI_API_KEY, OPENAI_MODEL
 except ModuleNotFoundError:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-nano")
 
 
 @dataclass
@@ -52,13 +53,9 @@ def summarize_chunk(text: str) -> str:
         user=text,
         max_tokens=150,
     )
-    if llm_summary:
-        return llm_summary
-
-    sentences = _split_sentences(text)
-    if not sentences:
-        return text[:240].strip()
-    return " ".join(sentences[:2]).strip()
+    if not llm_summary:
+        raise RuntimeError("OpenAI returned an empty summary.")
+    return llm_summary
 
 
 # ─── Technique 2: Hypothesis Question-Answer (HyQA) ─────
@@ -88,22 +85,10 @@ def generate_hypothesis_questions(text: str, n_questions: int = 3) -> list[str]:
         user=text,
         max_tokens=200,
     )
-    if llm_questions:
-        questions = [_clean_question(line) for line in llm_questions.splitlines()]
-        questions = [q for q in questions if q]
-        if questions:
-            return questions[:n_questions]
-
-    topic = _infer_topic(text)
-    questions = [
-        f"{topic.capitalize()} được quy định như thế nào?",
-        f"Thông tin chính về {topic} là gì?",
-        f"Đoạn này trả lời câu hỏi nào về {topic}?",
-    ]
-    if re.search(r"\d+", text):
-        questions.insert(
-            0, f"{topic.capitalize()} là bao nhiêu hoặc trong thời hạn mấy ngày?"
-        )
+    questions = [_clean_question(line) for line in llm_questions.splitlines()]
+    questions = [q for q in questions if q]
+    if not questions:
+        raise RuntimeError("OpenAI returned no hypothesis questions.")
     return questions[:n_questions]
 
 
@@ -135,7 +120,9 @@ def contextual_prepend(text: str, document_title: str = "") -> str:
         user=f"Tài liệu: {title}\n\nĐoạn văn:\n{text}",
         max_tokens=80,
     )
-    context = llm_context or f"Trích từ {title}, đoạn này nói về {_infer_topic(text)}."
+    if not llm_context:
+        raise RuntimeError("OpenAI returned an empty contextual prepend.")
+    context = llm_context
     return f"{context}\n\n{text}"
 
 
@@ -164,17 +151,10 @@ def extract_metadata(text: str) -> dict:
         user=text,
         max_tokens=150,
     )
-    if llm_metadata:
-        parsed = _parse_json_object(llm_metadata)
-        if parsed:
-            return parsed
-
-    return {
-        "topic": _infer_topic(text),
-        "entities": _extract_entities(text),
-        "category": _infer_category(text),
-        "language": _infer_language(text),
-    }
+    parsed = _parse_json_object(llm_metadata)
+    if not parsed:
+        raise RuntimeError("OpenAI returned invalid metadata JSON.")
+    return parsed
 
 
 # ─── Full Enrichment Pipeline ────────────────────────────
@@ -244,23 +224,19 @@ def enrich_chunks(
 
 def _call_openai(system: str, user: str, max_tokens: int) -> str:
     if not OPENAI_API_KEY:
-        return ""
-    try:
-        from openai import OpenAI
+        raise RuntimeError("OPENAI_API_KEY is required for real M5 enrichment.")
 
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            max_tokens=max_tokens,
-            temperature=0.1,
-        )
-        return response.choices[0].message.content.strip()
-    except Exception:
-        return ""
+    from openai import OpenAI
+
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    response = client.responses.create(
+        model=OPENAI_MODEL,
+        instructions=system,
+        input=user,
+        max_output_tokens=max(max_tokens, 1024),
+        reasoning={"effort": "minimal"},
+    )
+    return response.output_text.strip()
 
 
 def _split_sentences(text: str) -> list[str]:

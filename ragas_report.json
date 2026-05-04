@@ -1,0 +1,91 @@
+{
+  "aggregate": {
+    "faithfulness": 0.0,
+    "answer_relevancy": 0.2059343972282601,
+    "context_precision": 0.079999999992,
+    "context_recall": 0.36
+  },
+  "num_questions": 25,
+  "failures": [
+    {
+      "question": "Thuế GTGT còn được khấu trừ chuyển sang kỳ sau của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "answer_relevancy",
+      "score": -0.007408828218977638,
+      "avg_score": -0.0018522070547444096,
+      "diagnosis": "Answer doesn't match question",
+      "suggested_fix": "Improve prompt template"
+    },
+    {
+      "question": "Thuế GTGT phát sinh trong kỳ của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.0008984701757834848,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "DHA Surfaces phải nộp bao nhiêu thuế GTGT trong kỳ này?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.007212768325330864,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Tổng thuế GTGT đầu ra (bán ra) trong kỳ của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.008037750704623675,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "DHA Surfaces có phát sinh hàng hóa, dịch vụ nhập khẩu trong kỳ không?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.010001959994586909,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Tổng doanh thu bán hàng trong kỳ của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.010051406723916067,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Thuế GTGT đầu vào được khấu trừ kỳ này của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.01159905522177534,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Tờ khai thuế GTGT này thuộc kỳ tính thuế nào?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.013550794681588195,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Thuế suất GTGT áp dụng cho hàng hóa bán ra của DHA Surfaces là bao nhiêu?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.017195689304145265,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    },
+    {
+      "question": "Theo Nghị định 13/2023, việc xử lý dữ liệu cá nhân của trẻ em từ đủ 7 tuổi cần điều kiện gì?",
+      "worst_metric": "faithfulness",
+      "score": 0.0,
+      "avg_score": 0.023876764350440543,
+      "diagnosis": "LLM hallucinating",
+      "suggested_fix": "Tighten prompt, lower temperature"
+    }
+  ]
+}
