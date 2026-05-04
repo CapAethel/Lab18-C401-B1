@@ -1,3 +1,102 @@
 [
-  {"question": "hihi cả nhà tự tạo testset bằng cơm nhé", "ground_truth": "Không kịp tạo luôn"}
+  {
+    "question": "Mã số thuế của Công ty Cổ phần DHA Surfaces là gì?",
+    "ground_truth": "Mã số thuế của Công ty Cổ phần DHA Surfaces là 0106769437."
+  },
+  {
+    "question": "Tờ khai thuế GTGT này thuộc kỳ tính thuế nào?",
+    "ground_truth": "Tờ khai thuế GTGT thuộc kỳ tính thuế Quý 4 năm 2024."
+  },
+  {
+    "question": "Giá trị hàng hóa, dịch vụ mua vào trong kỳ của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "Giá trị hàng hóa, dịch vụ mua vào trong kỳ (chỉ tiêu [23]) là 2.405.743.241 đồng."
+  },
+  {
+    "question": "Thuế GTGT đầu vào được khấu trừ kỳ này của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "Thuế GTGT đầu vào được khấu trừ kỳ này (chỉ tiêu [25]) là 215.163.767 đồng."
+  },
+  {
+    "question": "Tổng doanh thu bán hàng trong kỳ của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "Tổng doanh thu và thuế GTGT của hàng hóa, dịch vụ bán ra (chỉ tiêu [34]) là 3.703.688.610 đồng."
+  },
+  {
+    "question": "Tổng thuế GTGT đầu ra (bán ra) trong kỳ của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "Tổng thuế GTGT của hàng hóa, dịch vụ bán ra (chỉ tiêu [35]) là 344.675.400 đồng."
+  },
+  {
+    "question": "Thuế GTGT phát sinh trong kỳ của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "Thuế GTGT phát sinh trong kỳ (chỉ tiêu [36] = [35] - [25]) là 129.511.633 đồng."
+  },
+  {
+    "question": "DHA Surfaces phải nộp bao nhiêu thuế GTGT trong kỳ này?",
+    "ground_truth": "Thuế GTGT còn phải nộp trong kỳ (chỉ tiêu [40]) là 52.133.830 đồng."
+  },
+  {
+    "question": "Thuế GTGT còn được khấu trừ chuyển sang kỳ sau của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "Thuế GTGT còn được khấu trừ chuyển sang kỳ sau (chỉ tiêu [22]) là 77.377.803 đồng."
+  },
+  {
+    "question": "Tờ khai thuế GTGT của DHA Surfaces được ký vào ngày nào và bởi ai?",
+    "ground_truth": "Tờ khai được ký ngày 24 tháng 01 năm 2025 bởi bà Trịnh Thị Sang, đại diện hợp pháp của người nộp thuế."
+  },
+  {
+    "question": "Thuế suất GTGT áp dụng cho hàng hóa bán ra của DHA Surfaces là bao nhiêu?",
+    "ground_truth": "DHA Surfaces áp dụng thuế suất GTGT 10% cho toàn bộ hàng hóa, dịch vụ bán ra, với doanh thu chịu thuế 10% là 3.703.688.610 đồng."
+  },
+  {
+    "question": "DHA Surfaces có phát sinh hàng hóa, dịch vụ nhập khẩu trong kỳ không?",
+    "ground_truth": "Không, DHA Surfaces không có hàng hóa, dịch vụ nhập khẩu trong kỳ. Chỉ tiêu [23a] và [24a] đều bằng 0."
+  },
+  {
+    "question": "Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân được ban hành vào ngày nào?",
+    "ground_truth": "Nghị định 13/2023/NĐ-CP được ban hành ngày 17 tháng 4 năm 2023."
+  },
+  {
+    "question": "Theo Nghị định 13/2023, dữ liệu cá nhân cơ bản bao gồm những loại thông tin gì?",
+    "ground_truth": "Dữ liệu cá nhân cơ bản bao gồm: họ, chữ đệm và tên khai sinh; ngày tháng năm sinh, ngày mất; giới tính; nơi sinh, nơi đăng ký khai sinh, nơi thường trú, nơi tạm trú, quê quán, địa chỉ liên hệ; quốc tịch; hình ảnh; số điện thoại, số CMND, số định danh cá nhân, số hộ chiếu, số giấy phép lái xe, số biển số xe, số mã số thuế cá nhân, số bảo hiểm xã hội, số thẻ bảo hiểm y tế; tình trạng hôn nhân; thông tin về mối quan hệ gia đình; thông tin về tài khoản số; và các thông tin khác gắn liền với một con người cụ thể."
+  },
+  {
+    "question": "Theo Nghị định 13/2023, dữ liệu cá nhân nhạy cảm gồm những loại nào?",
+    "ground_truth": "Dữ liệu cá nhân nhạy cảm gồm: quan điểm chính trị, quan điểm tôn giáo; tình trạng sức khỏe và đời tư trong hồ sơ bệnh án; thông tin liên quan đến nguồn gốc chủng tộc, dân tộc; thông tin về đặc điểm di truyền; thuộc tính vật lý và đặc điểm sinh học riêng; đời sống tình dục và xu hướng tình dục; dữ liệu về tội phạm và hành vi phạm tội; thông tin khách hàng của tổ chức tín dụng; dữ liệu vị trí của cá nhân xác định qua dịch vụ định vị; và các dữ liệu cá nhân khác được pháp luật quy định là đặc thù."
+  },
+  {
+    "question": "Chủ thể dữ liệu có những quyền gì theo Điều 9 Nghị định 13/2023?",
+    "ground_truth": "Theo Điều 9, chủ thể dữ liệu có 11 quyền: (1) quyền được biết; (2) quyền đồng ý; (3) quyền truy cập; (4) quyền rút lại sự đồng ý; (5) quyền xóa dữ liệu; (6) quyền hạn chế xử lý dữ liệu; (7) quyền cung cấp dữ liệu; (8) quyền phản đối xử lý dữ liệu; (9) quyền khiếu nại, tố cáo, khởi kiện; (10) quyền yêu cầu bồi thường thiệt hại; (11) quyền tự bảo vệ."
+  },
+  {
+    "question": "Theo Nghị định 13/2023, sự im lặng của chủ thể dữ liệu có được coi là sự đồng ý không?",
+    "ground_truth": "Không. Theo khoản 6 Điều 11, sự im lặng hoặc không phản hồi của chủ thể dữ liệu không được coi là sự đồng ý."
+  },
+  {
+    "question": "Theo Nghị định 13/2023, Bên Kiểm soát dữ liệu phải thực hiện yêu cầu xóa dữ liệu trong bao lâu?",
+    "ground_truth": "Theo khoản 5 Điều 16, việc xóa dữ liệu được thực hiện trong 72 giờ sau khi có yêu cầu của chủ thể dữ liệu, trừ trường hợp pháp luật có quy định khác."
+  },
+  {
+    "question": "Nghị định 13/2023 áp dụng đối với những đối tượng nào?",
+    "ground_truth": "Nghị định áp dụng đối với: (a) cơ quan, tổ chức, cá nhân Việt Nam; (b) cơ quan, tổ chức, cá nhân nước ngoài tại Việt Nam; (c) cơ quan, tổ chức, cá nhân Việt Nam hoạt động tại nước ngoài; (d) cơ quan, tổ chức, cá nhân nước ngoài trực tiếp tham gia hoặc có liên quan đến hoạt động xử lý dữ liệu cá nhân tại Việt Nam."
+  },
+  {
+    "question": "Khi phát hiện vi phạm bảo vệ dữ liệu cá nhân, Bên Kiểm soát dữ liệu phải thông báo cho cơ quan nào và trong bao lâu?",
+    "ground_truth": "Theo Điều 23, Bên Kiểm soát dữ liệu cá nhân phải thông báo cho Bộ Công an (Cục An ninh mạng và phòng, chống tội phạm sử dụng công nghệ cao) chậm nhất 72 giờ sau khi xảy ra hành vi vi phạm. Nếu thông báo sau 72 giờ thì phải kèm theo lý do thông báo chậm."
+  },
+  {
+    "question": "Theo Nghị định 13/2023, việc xử lý dữ liệu cá nhân của trẻ em từ đủ 7 tuổi cần điều kiện gì?",
+    "ground_truth": "Theo khoản 2 Điều 20, việc xử lý dữ liệu cá nhân của trẻ em từ đủ 7 tuổi trở lên phải có sự đồng ý của trẻ em và sự đồng ý của cha, mẹ hoặc người giám hộ theo quy định. Bên Kiểm soát phải xác minh tuổi của trẻ trước khi xử lý dữ liệu."
+  },
+  {
+    "question": "Những hành vi nào bị nghiêm cấm theo Điều 8 Nghị định 13/2023?",
+    "ground_truth": "Theo Điều 8, các hành vi bị nghiêm cấm gồm: (1) xử lý dữ liệu cá nhân trái với quy định pháp luật; (2) xử lý dữ liệu để tạo ra thông tin nhằm chống lại Nhà nước; (3) xử lý dữ liệu gây ảnh hưởng tới an ninh quốc gia, trật tự an toàn xã hội, quyền và lợi ích hợp pháp của tổ chức và cá nhân; (4) cản trở hoạt động bảo vệ dữ liệu cá nhân của cơ quan có thẩm quyền; (5) lợi dụng hoạt động bảo vệ dữ liệu cá nhân để vi phạm pháp luật."
+  },
+  {
+    "question": "Theo Nghị định 13/2023, trong trường hợp nào được xử lý dữ liệu cá nhân mà không cần sự đồng ý của chủ thể?",
+    "ground_truth": "Theo Điều 17, không cần sự đồng ý của chủ thể dữ liệu trong các trường hợp: (1) tình huống khẩn cấp cần xử lý ngay để bảo vệ tính mạng, sức khỏe của chủ thể dữ liệu hoặc người khác; (2) công khai dữ liệu theo quy định của luật; (3) xử lý dữ liệu của cơ quan nhà nước trong tình trạng khẩn cấp về quốc phòng, an ninh quốc gia, trật tự an toàn xã hội, thảm họa, dịch bệnh; (4) thực hiện nghĩa vụ theo hợp đồng của chủ thể dữ liệu; (5) phục vụ hoạt động của cơ quan nhà nước đã được quy định theo luật chuyên ngành."
+  },
+  {
+    "question": "Bên Kiểm soát dữ liệu cá nhân phải gửi hồ sơ đánh giá tác động cho Bộ Công an trong bao lâu kể từ khi bắt đầu xử lý?",
+    "ground_truth": "Theo khoản 4 Điều 24, Bên Kiểm soát dữ liệu cá nhân phải gửi Bộ Công an (Cục An ninh mạng và phòng, chống tội phạm sử dụng công nghệ cao) 01 bản chính Hồ sơ đánh giá tác động xử lý dữ liệu cá nhân trong thời gian 60 ngày kể từ ngày tiến hành xử lý dữ liệu cá nhân."
+  },
+  {
+    "question": "Theo Điều 25 Nghị định 13/2023, điều kiện để chuyển dữ liệu cá nhân của công dân Việt Nam ra nước ngoài là gì?",
+    "ground_truth": "Theo Điều 25, dữ liệu cá nhân của công dân Việt Nam được chuyển ra nước ngoài khi Bên chuyển dữ liệu lập Hồ sơ đánh giá tác động chuyển dữ liệu cá nhân ra nước ngoài và thực hiện các thủ tục theo quy định tại khoản 3, 4 và 5 Điều này. Hồ sơ phải bao gồm: thông tin các bên, mô tả mục tiêu xử lý sau khi chuyển, loại dữ liệu chuyển, biện pháp bảo vệ, sự đồng ý của chủ thể dữ liệu và văn bản ràng buộc trách nhiệm giữa các bên."
+  }
 ]
