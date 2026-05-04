@@ -1,7 +1,7 @@
 # Failure Analysis — Lab 18: Production RAG
 
-**Nhóm:** [Tên nhóm]  
-**Thành viên:** [Tên 1 → M1] · [Tên 2 → M2] · [Tên 3 → M3] · [Tên 4 → M4]
+**Nhóm:** [C401-B1]  
+**Thành viên:** [Tên 1 → M1] · [ Nguyễn Mai Phương → M2] · [Tên 3 → M3] · [Tên 4 → M4]
 
 ---
 
