@@ -23,26 +23,40 @@ class CrossEncoderReranker:
 
     def _load_model(self):
         if self._model is None:
-            # TODO: Load cross-encoder model
-            # Option A: from FlagEmbedding import FlagReranker
-            #           self._model = FlagReranker(self.model_name, use_fp16=True)
-            # Option B: from sentence_transformers import CrossEncoder
-            #           self._model = CrossEncoder(self.model_name)
-            pass
+            # Option B: Using sentence_transformers CrossEncoder
+            from sentence_transformers import CrossEncoder
+            self._model = CrossEncoder(self.model_name)
         return self._model
 
     def rerank(self, query: str, documents: list[dict], top_k: int = RERANK_TOP_K) -> list[RerankResult]:
         """Rerank documents: top-20 → top-k."""
-        # TODO: Implement reranking
-        # 1. model = self._load_model()
-        # 2. pairs = [(query, doc["text"]) for doc in documents]
-        # 3. scores = model.compute_score(pairs)  # FlagReranker
-        #    OR scores = model.predict(pairs)      # CrossEncoder
-        # 4. Combine: [(score, doc) for score, doc in zip(scores, documents)]
-        # 5. Sort by score descending
-        # 6. Return top_k RerankResult(text=..., original_score=doc["score"],
-        #                              rerank_score=score, metadata=doc["metadata"], rank=i)
-        return []
+        # 1. Load model
+        model = self._load_model()
+        
+        # 2. Create query-document pairs
+        pairs = [(query, doc["text"]) for doc in documents]
+        
+        # 3. Get rerank scores using CrossEncoder
+        scores = model.predict(pairs)
+        
+        # 4. Combine scores with documents
+        scored_docs = [(float(score), doc) for score, doc in zip(scores, documents)]
+        
+        # 5. Sort by rerank score descending
+        scored_docs.sort(key=lambda x: x[0], reverse=True)
+        
+        # 6. Return top_k RerankResult objects
+        results = []
+        for i, (score, doc) in enumerate(scored_docs[:top_k]):
+            results.append(RerankResult(
+                text=doc["text"],
+                original_score=doc.get("score", 0.0),
+                rerank_score=score,
+                metadata=doc.get("metadata", {}),
+                rank=i + 1
+            ))
+        
+        return results
 
 
 class FlashrankReranker:
@@ -51,22 +65,55 @@ class FlashrankReranker:
         self._model = None
 
     def rerank(self, query: str, documents: list[dict], top_k: int = RERANK_TOP_K) -> list[RerankResult]:
-        # TODO (optional): from flashrank import Ranker, RerankRequest
-        # model = Ranker(); passages = [{"text": d["text"]} for d in documents]
-        # results = model.rerank(RerankRequest(query=query, passages=passages))
-        return []
+        """Lightweight reranker using flashrank (<5ms)."""
+        if self._model is None:
+            from flashrank import Ranker, RerankRequest
+            self._model = Ranker()
+        
+        # Prepare passages for flashrank
+        passages = [{"text": d["text"]} for d in documents]
+        
+        # Rerank using flashrank
+        rerank_request = RerankRequest(query=query, passages=passages)
+        results_raw = self._model.rerank(rerank_request)
+        
+        # Convert to RerankResult format
+        results = []
+        for i, result in enumerate(results_raw[:top_k]):
+            doc = documents[result.get("index", i)]
+            results.append(RerankResult(
+                text=result["text"],
+                original_score=doc.get("score", 0.0),
+                rerank_score=result.get("score", 0.0),
+                metadata=doc.get("metadata", {}),
+                rank=i + 1
+            ))
+        
+        return results
 
 
 def benchmark_reranker(reranker, query: str, documents: list[dict], n_runs: int = 5) -> dict:
     """Benchmark latency over n_runs."""
-    # TODO: Implement benchmark
-    # 1. times = []
-    # 2. for _ in range(n_runs):
-    #      start = time.perf_counter()
-    #      reranker.rerank(query, documents)
-    #      times.append((time.perf_counter() - start) * 1000)  # ms
-    # 3. return {"avg_ms": mean(times), "min_ms": min(times), "max_ms": max(times)}
-    return {"avg_ms": 0, "min_ms": 0, "max_ms": 0}
+    # 1. Collect timing measurements
+    times = []
+    
+    # 2. Run reranking n_runs times and measure latency
+    for _ in range(n_runs):
+        start = time.perf_counter()
+        reranker.rerank(query, documents)
+        elapsed_ms = (time.perf_counter() - start) * 1000  # Convert to milliseconds
+        times.append(elapsed_ms)
+    
+    # 3. Calculate statistics
+    avg_ms = sum(times) / len(times)
+    min_ms = min(times)
+    max_ms = max(times)
+    
+    return {
+        "avg_ms": avg_ms,
+        "min_ms": min_ms,
+        "max_ms": max_ms
+    }
 
 
 if __name__ == "__main__":
