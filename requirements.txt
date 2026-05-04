@@ -1,0 +1,23 @@
+python-dotenv
+PyPDF2
+underthesea
+maturin
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+torchaudio
+
+sentence-transformers
+FlagEmbedding
+rank-bm25
+qdrant-client
+flashrank
+openai
+ragas
+datasets
+numpy
+pandas
+tqdm
+pytest
+pytest-timeout
