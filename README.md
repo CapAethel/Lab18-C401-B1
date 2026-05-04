@@ -9,19 +9,19 @@
 
 Lab gồm **2 phần**:
 
-| Phần | Hình thức | Thời gian | Mô tả |
-|------|-----------|-----------|-------|
-| **Phần A** | Cá nhân | 1.5 giờ | Implement 1 trong 4 modules |
-| **Phần B** | Nhóm (3–4 người) | 30 phút | Ghép modules → full pipeline → eval → present |
+| Phần       | Hình thức        | Thời gian | Mô tả                                         |
+| ---------- | ---------------- | --------- | --------------------------------------------- |
+| **Phần A** | Cá nhân          | 1.5 giờ   | Implement 1 trong 4 modules                   |
+| **Phần B** | Nhóm (3–4 người) | 30 phút   | Ghép modules → full pipeline → eval → present |
 
 ```
   Cá nhân                         Nhóm
   ┌────────────┐
   │ M1 Chunking│──┐
   ├────────────┤  │    ┌──────────────────────────────┐
-  │ M2 Search  │──┼───▶│  Production RAG System        │
-  ├────────────┤  │    │  pipeline.py + RAGAS eval     │
-  │ M3 Rerank  │──┤    │  + failure analysis           │
+  │ M2 Search  │──┼───▶│  Production RAG System       │
+  ├────────────┤  │    │  pipeline.py + RAGAS eval    │
+  │ M3 Rerank  │──┤    │  + failure analysis          │
   ├────────────┤  │    └──────────────────────────────┘
   │ M4 Eval    │──┘
   └────────────┘
@@ -97,9 +97,9 @@ lab18-production-rag/
 
 ## Timeline
 
-| Thời gian | Hoạt động |
-|-----------|-----------|
-| 0:00–0:15 | Setup + chạy `naive_baseline.py` |
-| 0:15–1:45 | **Phần A (cá nhân):** implement module → `pytest tests/test_m*.py` |
+| Thời gian | Hoạt động                                                             |
+| --------- | --------------------------------------------------------------------- |
+| 0:00–0:15 | Setup + chạy `naive_baseline.py`                                      |
+| 0:15–1:45 | **Phần A (cá nhân):** implement module → `pytest tests/test_m*.py`    |
 | 1:45–2:15 | **Phần B (nhóm):** ghép → `python src/pipeline.py` → failure analysis |
-| 2:15–2:30 | Presentation 5 phút/nhóm |
+| 2:15–2:30 | Presentation 5 phút/nhóm                                              |

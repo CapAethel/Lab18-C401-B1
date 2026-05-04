@@ -284,6 +284,14 @@ def _split_sentences(text: str) -> list[str]:
 
 def _read_pdf(filepath: str) -> str:
     try:
+        from markitdown import MarkItDown
+
+        result = MarkItDown().convert(filepath)
+        return result.text_content
+    except Exception:
+        pass
+
+    try:
         result = subprocess.run(
             ["pdftotext", "-layout", filepath, "-"],
             capture_output=True,
